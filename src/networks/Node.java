@@ -1,18 +1,17 @@
 package networks;
 
+import java.util.Vector;
+
 public abstract class Node extends Thread
 {
 
-  protected boolean running;
+  protected Vector<String> socket_list = new Vector<String>();
+  protected int socket;
 
-  public Node()
+  public Node(Vector<String> socket_list, int socket)
   {
-    this.running = false;
-  }
-  
-  public void kill()
-  {
-    this.running = false;
+    this.socket_list = socket_list;
+    this.socket = socket;
   }
   
 }

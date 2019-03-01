@@ -28,7 +28,8 @@ public class Driver
            str = "";
          }
       }
-    } finally
+    }
+    finally
     {
       if (in != null)
       {
@@ -36,25 +37,16 @@ public class Driver
       }
     }
     
-    // Verify sockets are read in properly
-    /*
-    for(int i = 0; i < socket_list.size(); i++)
-    {
-      System.out.println(socket_list.get(i));
-    }
-    */
-    
     // Selecting mode: P2P, Server, or Client
     Scanner reader = new Scanner(System.in);
-    Node node = null;
-    int input = 0;
+    int mode = 0;
     boolean mode_selected = false;
     while(!mode_selected)
     {
       System.out.println("Select mode: \n  1. P2P\n  2. Server\n  3. Client");
       try
       {
-        input = reader.nextInt();
+        mode = reader.nextInt();
       }
       catch(Exception e)
       {
@@ -62,7 +54,7 @@ public class Driver
         reader.nextLine(); // Clear input buffer
         continue;
       }
-      if(input < 1 || input > 3)
+      if(mode < 1 || mode > 3)
       {
         System.out.println("Incorrect selection\n");
         continue;
@@ -70,24 +62,54 @@ public class Driver
       mode_selected = true;
     }
     
+    // Selecting socket
+    int socket = 0;
+    boolean socket_selected = false;
+    while(!socket_selected)
+    {
+      System.out.println("Select socket:");
+      for(int i = 1; i <= socket_list.size(); i++)
+      {
+        System.out.println("  " + i + ". " + socket_list.get(i - 1));
+      }
+      try
+      {
+        socket = reader.nextInt() - 1;
+      }
+      catch(Exception e)
+      {
+        System.out.println("Invalid input\n");
+        reader.nextLine(); // Clear input buffer
+        continue;
+      }
+      if(socket < 0 || socket >= socket_list.size())
+      {
+        System.out.println("Incorrect selection\n");
+        continue;
+      }
+      socket_selected = true;
+    }
+    
     // Starting correct node type
-    switch(input)
+    Node node = null;
+    switch(mode)
     {
       case 1: // P2PNode
-        node = new P2PNode();
+        node = new P2PNode(socket_list, socket);
         node.start();
         break;
       case 2: // ServerNode
-        node = new ServerNode();
+        node = new ServerNode(socket_list, socket);
         node.start();
         break;
       case 3: // ClientNode
-        node = new ClientNode();
+        node = new ClientNode(socket_list, socket);
         node.start();
         break;
     }
     
     // Post start options
+    int input = 0;
     boolean option_selected = false;
     while(!option_selected)
     {
@@ -111,8 +133,20 @@ public class Driver
       switch(input)
       {
         case 1: // Exit
-          node.kill();
+          switch(mode)
+          {
+            case 1: // P2PNode
+              ((P2PNode)node).kill();
+              break;
+            case 2: // ServerNode
+              ((ServerNode)node).kill();
+              break;
+            case 3: // ClientNode
+              ((ClientNode)node).kill();
+              break;
+          }
           option_selected = true;
+          break;
       }
     }
     
