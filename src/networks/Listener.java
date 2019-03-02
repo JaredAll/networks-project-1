@@ -1,6 +1,9 @@
 package networks;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectInputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -28,24 +31,21 @@ public class Listener extends Thread
       {
         socket = new DatagramSocket(this.port);
         byte[] incomingData = new byte[1024];
-        
         DatagramPacket incomingPacket = new DatagramPacket(incomingData, incomingData.length);
         socket.receive(incomingPacket);
-        String message = new String(incomingPacket.getData());
+
+        PacketList packet_list = (PacketList)deserializePacketList(incomingPacket.getData());
+        packet_list.display();
+        
         InetAddress IPAddress = incomingPacket.getAddress();
         int port = incomingPacket.getPort();
         
-        System.out.println("Received message from client: " + message);
-        System.out.println("Client IP:"+IPAddress.getHostAddress());
-        System.out.println("Client port:"+port);
+        System.out.println("Received packet list from client");
+        System.out.println("Client IP: "+IPAddress.getHostAddress());
+        System.out.println("Client port :"+port);
         
-        String reply = "Thank you for the message";
-        byte[] data = reply.getBytes();
         
-        DatagramPacket replyPacket = new DatagramPacket(data, data.length, IPAddress, port);
         
-        socket.send(replyPacket);
-        Thread.sleep(2000);
         socket.close();
       } 
       catch (SocketException e) 
@@ -55,10 +55,6 @@ public class Listener extends Thread
       catch (IOException i) 
       {
         i.printStackTrace();
-      } 
-      catch (InterruptedException e) 
-      {
-        e.printStackTrace();
       }
     }
   }
@@ -66,6 +62,41 @@ public class Listener extends Thread
   public void kill()
   {
     this.running = false;
+  }
+  
+  private Object deserializePacketList(byte[] data)
+  {
+    ByteArrayInputStream bis = new ByteArrayInputStream(data);
+    ObjectInput in = null;
+    try
+    {
+      in = new ObjectInputStream(bis);
+      Object packet_list = in.readObject();
+      return packet_list;
+    }
+    catch (IOException e)
+    {
+      // Ignore exception
+    }
+    catch (ClassNotFoundException e)
+    {
+      // Ignore exception
+    }
+    finally
+    {
+      try
+      {
+        if (in != null)
+        {
+          in.close();
+        }
+      }
+      catch (IOException ex)
+      {
+        // Ignore close exception
+      }
+    }
+    return null;
   }
   
 }

@@ -1,6 +1,9 @@
 package networks;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.ObjectOutput;
+import java.io.ObjectOutputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -14,14 +17,15 @@ public class Sender extends Thread
   private String host;
   private int port;
   private boolean running;
-  private String message;
+  private byte[] data;
+  private PacketList packet_list;
 
-  public Sender(String host, int port) 
+  public Sender(String host, int port, PacketList packet_list) 
   {
     this.host = host;
     this.port = port;
     this.running = false;
-    this.message = "Hotdogs";
+    this.setPacketList(packet_list);
   }
 
   public void run() 
@@ -33,15 +37,9 @@ public class Sender extends Thread
       {
         Socket = new DatagramSocket();
         InetAddress IPAddress = InetAddress.getByName(this.host);
-        byte[] incomingData = new byte[1024];
-        byte[] data = this.message.getBytes();
         DatagramPacket sendPacket = new DatagramPacket(data, data.length, IPAddress, this.port);
         Socket.send(sendPacket);
         System.out.println("Message sent from client");
-        DatagramPacket incomingPacket = new DatagramPacket(incomingData, incomingData.length);
-        Socket.receive(incomingPacket);
-        String response = new String(incomingPacket.getData());
-        System.out.println("Response from server:" + response);
         Socket.close();
       }
       catch (UnknownHostException e) 
@@ -71,5 +69,41 @@ public class Sender extends Thread
   {
     this.running = false;
   }
+  
+  public void setPacketList(PacketList packet_list)
+  {
+    this.packet_list = packet_list;
+    this.data = serializePacketList();
+  }
+  
+  private byte[] serializePacketList()
+  {
+    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    ObjectOutput out = null;
+    try
+    {
+      out = new ObjectOutputStream(bos);   
+      out.writeObject(packet_list);
+      out.flush();
+      return bos.toByteArray();
+    }
+    catch (IOException e)
+    {
+      // Ignore exception
+    }
+    finally
+    {
+      try
+      {
+        bos.close();
+      }
+      catch (IOException ex)
+      {
+        // Ignore close exception
+      }
+    }
+    return null;
+  }
+  
   
 }

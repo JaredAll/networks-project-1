@@ -7,19 +7,19 @@ public class ClientNode extends Node
   
   private Sender sender;
   
-  public ClientNode(Vector<String> socket_list, int socket)
+  public ClientNode(Vector<String> socket_list, int socket_number)
   {
-    super(socket_list, socket);
-    this.sender = new Sender("localhost", 2323);
+    super(socket_list, socket_number);
+    this.server = false;
   }
 
   public void run() 
   {
-    for(int i = 0; i < this.socket_list.size(); i++)
+    for(int i = 0; i < this.ip_list.size(); i++)
     {
-      if(i != socket)
+      if(i != socket_number)
       {
-        sender = new Sender(this.socket_list.get(i).split("\\s+")[0], Integer.parseInt(this.socket_list.get(i).split("\\s+")[1]));
+        //this.sender = new Sender(this.ip_list.get(i), this.port_list.get(i));
         break;
       }
     }
