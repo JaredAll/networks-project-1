@@ -32,16 +32,23 @@ public class P2PNode extends Node
       if(i == socket_number)
       {
         listener = new Listener(this.port_list.get(i));
-        System.out.println("Listener on port " + this.port_list.get(i));
         listener.start();
       }
       else
       {
         senders.add(new Sender(this.ip_list.get(i), this.port_list.get(i), this.packet_list));
-        System.out.println("Sender to " + this.ip_list.get(i) + " on port " + this.port_list.get(i));
         senders.get(senders.size() - 1).start();
       }
     }
+    try
+    {
+      Thread.sleep(500);
+    }
+    catch (InterruptedException e)
+    {
+      e.printStackTrace();
+    }
+    System.out.println();
   }
   
   public void kill()

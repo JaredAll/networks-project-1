@@ -9,6 +9,7 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.util.Random;
 
 public class Sender extends Thread
 {
@@ -19,6 +20,7 @@ public class Sender extends Thread
   private boolean running;
   private byte[] data;
   private PacketList packet_list;
+  private Random rand;
 
   public Sender(String host, int port, PacketList packet_list) 
   {
@@ -26,20 +28,30 @@ public class Sender extends Thread
     this.port = port;
     this.running = false;
     this.setPacketList(packet_list);
+    this.rand = new Random();
   }
 
-  public void run() 
+  public void run()
   {
+    System.out.println("Sender to " + this.host + " on port " + this.port);
     this.running = true;
     while(running)
     {
+      try
+      {
+        Thread.sleep(rand.nextInt(10000) + 5000); // Sleep 5 - 15 seconds
+      }
+      catch (InterruptedException e)
+      {
+        e.printStackTrace();
+      }
       try
       {
         Socket = new DatagramSocket();
         InetAddress IPAddress = InetAddress.getByName(this.host);
         DatagramPacket sendPacket = new DatagramPacket(data, data.length, IPAddress, this.port);
         Socket.send(sendPacket);
-        System.out.println("Message sent from client");
+        System.out.println("Packets sent to [" + this.host + ":" + this.port + "]\n");
         Socket.close();
       }
       catch (UnknownHostException e) 
@@ -51,14 +63,6 @@ public class Sender extends Thread
         e.printStackTrace();
       } 
       catch (IOException e) 
-      {
-        e.printStackTrace();
-      }
-      try
-      {
-        Thread.sleep(5000);
-      }
-      catch (InterruptedException e)
       {
         e.printStackTrace();
       }

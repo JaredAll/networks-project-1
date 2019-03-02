@@ -24,6 +24,7 @@ public class Listener extends Thread
   
   public void run() 
   {
+    System.out.println("Listener on port " + this.port);
     this.running = true;
     while(running)
     {
@@ -35,16 +36,12 @@ public class Listener extends Thread
         socket.receive(incomingPacket);
 
         PacketList packet_list = (PacketList)deserializePacketList(incomingPacket.getData());
-        packet_list.display();
         
         InetAddress IPAddress = incomingPacket.getAddress();
         int port = incomingPacket.getPort();
         
-        System.out.println("Received packet list from client");
-        System.out.println("Client IP: "+IPAddress.getHostAddress());
-        System.out.println("Client port :"+port);
-        
-        
+        System.out.println("Packets received from [" + IPAddress.getHostAddress() + ":" + port + "]");
+        packet_list.display();
         
         socket.close();
       } 

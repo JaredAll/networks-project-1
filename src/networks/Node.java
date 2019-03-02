@@ -22,8 +22,8 @@ public abstract class Node extends Thread
     }
     this.socket_number = socket_number;
     this.active = true;
-    this.packet_list = new PacketList(ip_list.size());
     this.packet_list_data = null;
+    this.packet_list = new PacketList(ip_list.size());
   }
   
 }
