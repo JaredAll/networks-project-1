@@ -15,11 +15,13 @@ public class Listener extends Thread
   DatagramSocket socket = null;
   private int port;
   private boolean running;
+  private PacketList packet_list;
   
-  public Listener(int port)
+  public Listener(int port, PacketList packet_list)
   {
     this.port = port;
     this.running = false;
+    this.packet_list = packet_list;
   }
   
   public void run() 
@@ -73,11 +75,11 @@ public class Listener extends Thread
     }
     catch (IOException e)
     {
-      // Ignore exception
+      e.printStackTrace();
     }
     catch (ClassNotFoundException e)
     {
-      // Ignore exception
+      e.printStackTrace();
     }
     finally
     {
@@ -88,9 +90,9 @@ public class Listener extends Thread
           in.close();
         }
       }
-      catch (IOException ex)
+      catch (IOException e)
       {
-        // Ignore close exception
+        e.printStackTrace();
       }
     }
     return null;

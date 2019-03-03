@@ -31,7 +31,7 @@ public class ServerNode extends Node
     {
       if(i == socket_number)
       {
-        listener = new Listener(this.port_list.get(i));
+        listener = new Listener(this.port_list.get(i), this.packet_list);
         listener.start();
       }
       else

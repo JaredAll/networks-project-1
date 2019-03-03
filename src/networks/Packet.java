@@ -74,4 +74,9 @@ public class Packet implements Serializable
     return this.timestamp;
   }
   
+  public void updateTimestamp()
+  {
+    this.timestamp = Instant.now();
+  }
+  
 }

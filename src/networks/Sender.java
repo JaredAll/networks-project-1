@@ -27,7 +27,8 @@ public class Sender extends Thread
     this.host = host;
     this.port = port;
     this.running = false;
-    this.setPacketList(packet_list);
+    this.packet_list = packet_list;
+    this.data = serializePacketList();
     this.rand = new Random();
   }
 
@@ -49,6 +50,7 @@ public class Sender extends Thread
       {
         Socket = new DatagramSocket();
         InetAddress IPAddress = InetAddress.getByName(this.host);
+        this.data = serializePacketList();
         DatagramPacket sendPacket = new DatagramPacket(data, data.length, IPAddress, this.port);
         Socket.send(sendPacket);
         System.out.println("Packets sent to [" + this.host + ":" + this.port + "]\n");
@@ -74,12 +76,6 @@ public class Sender extends Thread
     this.running = false;
   }
   
-  public void setPacketList(PacketList packet_list)
-  {
-    this.packet_list = packet_list;
-    this.data = serializePacketList();
-  }
-  
   private byte[] serializePacketList()
   {
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -93,7 +89,7 @@ public class Sender extends Thread
     }
     catch (IOException e)
     {
-      // Ignore exception
+      e.printStackTrace();
     }
     finally
     {
@@ -101,9 +97,9 @@ public class Sender extends Thread
       {
         bos.close();
       }
-      catch (IOException ex)
+      catch (IOException e)
       {
-        // Ignore close exception
+        e.printStackTrace();
       }
     }
     return null;
