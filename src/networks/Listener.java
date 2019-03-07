@@ -27,6 +27,7 @@ public class Listener extends Thread
   private boolean castQuorum;
   private boolean becomeServer = false;
   private int myNode;
+  private boolean switchServer = false;
   
   public Listener(String paramHost, int port, PacketList packet_list, 
       Vector<Integer> paramReportingNodes, int paramMyNode )
@@ -41,6 +42,7 @@ public class Listener extends Thread
     quorum = 0;
     myNode = paramMyNode;
     castQuorum = false;
+    
     
     for( int i = 0; i < packet_list.getLength(); i++ )
     {
@@ -69,7 +71,7 @@ public class Listener extends Thread
           System.out.println(i);
           if( updatedPackets != null && !updatedPackets.contains(i) && reportingNodes.contains(i) )
           {
-            System.out.println("^this is being set to inactive");
+            System.out.println("^ this is being set to inactive");
             packet_list.getPacket(i).setActiveFlag( inactive );              
           }
         }
@@ -91,7 +93,6 @@ public class Listener extends Thread
         
         if( quorum > packet_list.getLength() / 2)
         {
-          kill();
           becomeServer = true;
         }
         else
@@ -202,9 +203,19 @@ public class Listener extends Thread
     updatedPackets.clear();
   }
   
+  public void voteForSelf()
+  {
+    quorum += 1;
+  }
+  
   public boolean becomeServer()
   {
     return becomeServer;
+  }
+  
+  public boolean switchServer()
+  {
+    return switchServer;
   }
   
   private Object deserializePacketList(byte[] data)

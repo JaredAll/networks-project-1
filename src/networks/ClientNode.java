@@ -10,6 +10,8 @@ public class ClientNode extends Node
   private Vector<Sender> senders = new Vector<Sender>();
   private Listener listener;
   private Vector<Integer> reportingNodes = new Vector<Integer>();
+  private int serverNodeNum;
+  private boolean isServer = false;
   
   public ClientNode(Vector<String> node_list, int nodeNum)
   {
@@ -31,6 +33,7 @@ public class ClientNode extends Node
         packet_list.setPacket(i, new Packet(this.ip_list.get(i), this.port_list.get(i), -1, -1)); 
       }
     }
+    serverNodeNum = 0;
   }
 
   public void run() 
@@ -44,11 +47,14 @@ public class ClientNode extends Node
         listener.start();
       }
     }
-    
-    int serverNodeNum = 0;
-    senders.add( new Sender( this.ip_list.get( serverNodeNum ), 
-        this.port_list.get( serverNodeNum ), this.packet_list ) );
-    senders.get( serverNodeNum ).start();
+
+    //only create sender if you are not going to be the first server
+    if( serverNodeNum != nodeNum )
+    {
+      senders.add( new Sender( this.ip_list.get( serverNodeNum ), 
+          this.port_list.get( serverNodeNum ), this.packet_list ) );
+      senders.get( serverNodeNum ).start();
+    }
     
     //remain a client until the listener says to change
     try
@@ -64,34 +70,44 @@ public class ClientNode extends Node
     
     //periodically check for quorum votes and results
     Timer timer = new Timer();
-    TimerTask becomeServerCheck = new TimerTask()
+    TimerTask serverCheck = new TimerTask()
     {
       public void run()
       {
-        if( listener.becomeServer() )
+        if( listener.becomeServer() && !isServer )
         {
           //if listener says to become server, add senders and start them up
           createSenders();
+          serverNodeNum = nodeNum;
+          isServer = true;
         }
         
         if( listener.castQuorum() )
         {
-          int newServerNodeNum = 0;
-          //determine new server node number
-          if( newServerNodeNum == serverNodeNum )
+          int newServerNodeNum;
+          
+          if( serverNodeNum == nodeNum )
           {
-            newServerNodeNum += 1;
+            newServerNodeNum = nodeNum;
+          }
+          else
+          {
+            newServerNodeNum = serverNodeNum + 1;
           }
           
           if( newServerNodeNum == nodeNum )
           {
-            newServerNodeNum += 1;
+            listener.voteForSelf();
           }
-          senders.add( new Sender( getIpList().get( newServerNodeNum ), 
-              getPortList().get( newServerNodeNum ), getPacketList() ) );
+          else
+          {
+            senders.add( new Sender( getIpList().get( newServerNodeNum ), 
+                getPortList().get( newServerNodeNum ), getPacketList() ) );
+          }
         }
         
-        if( !listener.castQuorum() && !listener.becomeServer())
+        //only maintain one sender if you are client 
+        if( !listener.castQuorum() && !listener.becomeServer() && !isServer )
         {
           senders.clear();
           senders.add( new Sender( getIpList().get( serverNodeNum ), 
@@ -103,7 +119,7 @@ public class ClientNode extends Node
     
     long delay = 45000L;
     long period = 45000L;
-    timer.scheduleAtFixedRate(becomeServerCheck, delay, period);
+    timer.scheduleAtFixedRate(serverCheck, delay, period);
     
   }
   
@@ -118,12 +134,16 @@ public class ClientNode extends Node
   
   private void createSenders()
   {
+    senders.clear();
     for( int i = 1; i < ip_list.size(); i++ )
     {
-      senders.add( new Sender( this.ip_list.get(i), this.port_list.get(i), this.packet_list ));
+      if( i != serverNodeNum )
+      {
+        senders.add( new Sender( this.ip_list.get(i), this.port_list.get(i), this.packet_list ));
+      }
     }
     
-    for( int i = 1; i < ip_list.size(); i++ )
+    for( int i = 0; i < senders.size(); i++ )
     {
       senders.get(i).start();
     }
