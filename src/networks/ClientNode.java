@@ -1,22 +1,30 @@
 package networks;
 
 import java.util.Vector;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class ClientNode extends Node
 {
   
-  private Sender sender;
+  private Vector<Sender> senders = new Vector<Sender>();
   private Listener listener;
+  private Vector<Integer> reportingNodes = new Vector<Integer>();
   
-  public ClientNode(Vector<String> socket_list, int socket_number)
+  public ClientNode(Vector<String> node_list, int nodeNum)
   {
-    super(socket_list, socket_number);
+    super(node_list, nodeNum);
     this.server = false;
     for(int i = 0; i < this.packet_list.getLength(); i++)
     {
-      if(i == this.socket_number)
+      if( i == 0 )
       {
-        packet_list.setPacket(i, new Packet(this.ip_list.get(i), this.port_list.get(i), 1, 0));        
+        reportingNodes.add(i);
+      }
+      if(i == this.nodeNum)
+      {
+        packet_list.setPacket(i, new Packet(this.ip_list.get(i), this.port_list.get(i), 1, 0));
+        setIP(this.ip_list.get(i));
       }
       else
       {
@@ -29,14 +37,20 @@ public class ClientNode extends Node
   {
     for(int i = 0; i < this.ip_list.size(); i++)
     {
-      if(i == socket_number)
+      if(i == nodeNum)
       {
-        listener = new Listener(this.port_list.get(i), this.packet_list);
+        listener = new Listener(this.IPAddress, this.port_list.get(i), this.packet_list, 
+            reportingNodes, nodeNum);
         listener.start();
       }
     }
-    sender = new Sender(this.ip_list.get(0), this.port_list.get(0), this.packet_list);
-    sender.start();
+    
+    int serverNodeNum = 0;
+    senders.add( new Sender( this.ip_list.get( serverNodeNum ), 
+        this.port_list.get( serverNodeNum ), this.packet_list ) );
+    senders.get( serverNodeNum ).start();
+    
+    //remain a client until the listener says to change
     try
     {
       Thread.sleep(500);
@@ -46,12 +60,88 @@ public class ClientNode extends Node
       e.printStackTrace();
     }
     System.out.println();
+    
+    
+    //periodically check for quorum votes and results
+    Timer timer = new Timer();
+    TimerTask becomeServerCheck = new TimerTask()
+    {
+      public void run()
+      {
+        if( listener.becomeServer() )
+        {
+          //if listener says to become server, add senders and start them up
+          createSenders();
+        }
+        
+        if( listener.castQuorum() )
+        {
+          int newServerNodeNum = 0;
+          //determine new server node number
+          if( newServerNodeNum == serverNodeNum )
+          {
+            newServerNodeNum += 1;
+          }
+          
+          if( newServerNodeNum == nodeNum )
+          {
+            newServerNodeNum += 1;
+          }
+          senders.add( new Sender( getIpList().get( newServerNodeNum ), 
+              getPortList().get( newServerNodeNum ), getPacketList() ) );
+        }
+        
+        if( !listener.castQuorum() && !listener.becomeServer())
+        {
+          senders.clear();
+          senders.add( new Sender( getIpList().get( serverNodeNum ), 
+              getPortList().get( serverNodeNum ), getPacketList() ) );
+        }
+          
+      }
+    };
+    
+    long delay = 45000L;
+    long period = 45000L;
+    timer.scheduleAtFixedRate(becomeServerCheck, delay, period);
+    
   }
   
   public void kill()
   {
     listener.kill();
-    sender.kill();
+    for(int i = 0; i < senders.size(); i++)
+    {
+      senders.get(i).kill();
+    }
+  }
+  
+  private void createSenders()
+  {
+    for( int i = 1; i < ip_list.size(); i++ )
+    {
+      senders.add( new Sender( this.ip_list.get(i), this.port_list.get(i), this.packet_list ));
+    }
+    
+    for( int i = 1; i < ip_list.size(); i++ )
+    {
+      senders.get(i).start();
+    }
+  }
+  
+  private Vector<String> getIpList()
+  {
+    return ip_list;
+  }
+  
+  private Vector<Integer> getPortList()
+  {
+    return port_list;
+  }
+  
+  private PacketList getPacketList()
+  {
+    return packet_list;
   }
   
 }

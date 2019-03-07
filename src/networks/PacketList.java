@@ -1,6 +1,7 @@
 package networks;
 
 import java.io.Serializable;
+import java.net.InetAddress;
 
 public class PacketList implements Serializable
 {
@@ -26,6 +27,19 @@ public class PacketList implements Serializable
   public int getLength()
   {
     return this.packet_list.length;
+  }
+  
+  public int findPacket(String IPAddress)
+  {
+    int packetLocation = 0;
+    for( int i = 0; i < packet_list.length; i++ )
+    {
+      if( packet_list[ i ].getIP().equals( IPAddress ) )
+      {
+        packetLocation = i;
+      }
+    }
+    return packetLocation;
   }
   
   public void display()

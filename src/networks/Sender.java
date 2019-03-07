@@ -16,7 +16,7 @@ public class Sender extends Thread
 
   DatagramSocket Socket;
   private String host;
-  private int port;
+  private int destinationPort;
   private boolean running;
   private byte[] data;
   private PacketList packet_list;
@@ -25,7 +25,7 @@ public class Sender extends Thread
   public Sender(String host, int port, PacketList packet_list) 
   {
     this.host = host;
-    this.port = port;
+    this.destinationPort = port;
     this.running = false;
     this.packet_list = packet_list;
     this.data = serializePacketList();
@@ -34,7 +34,7 @@ public class Sender extends Thread
 
   public void run()
   {
-    System.out.println("Sender to " + this.host + " on port " + this.port);
+    System.out.println("Sender to socket (" + this.host + ", " + this.destinationPort + ")");
     this.running = true;
     while(running)
     {
@@ -51,9 +51,10 @@ public class Sender extends Thread
         Socket = new DatagramSocket();
         InetAddress IPAddress = InetAddress.getByName(this.host);
         this.data = serializePacketList();
-        DatagramPacket sendPacket = new DatagramPacket(data, data.length, IPAddress, this.port);
+        System.out.println(IPAddress);
+        DatagramPacket sendPacket = new DatagramPacket(data, data.length, IPAddress, this.destinationPort);
         Socket.send(sendPacket);
-        System.out.println("Packets sent to [" + this.host + ":" + this.port + "]\n");
+        System.out.println("Packets sent to [" + this.host + ":" + this.destinationPort + "] from port " + Socket.getLocalPort() + "\n");
         Socket.close();
       }
       catch (UnknownHostException e) 

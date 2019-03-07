@@ -13,7 +13,7 @@ public class Driver
 
     // Read in sockets.txt and store in socket_list
     FileReader in = null;
-    Vector<String> socket_list = new Vector<String>();
+    Vector<String> node_list = new Vector<String>();
     try
     {
       in = new FileReader("sockets.txt");
@@ -24,7 +24,7 @@ public class Driver
          str += (char)c;
          if((char)c == '\n')
          {
-           socket_list.add(str);
+           node_list.add(str);
            str = "";
          }
       }
@@ -63,18 +63,19 @@ public class Driver
     }
     
     // Selecting socket
-    int socket = 0;
-    boolean socket_selected = false;
-    while(!socket_selected)
+    int nodeNum = 0;
+    boolean node_selected = false;
+    
+    while(!node_selected)
     {
-      System.out.println("Select socket:");
-      for(int i = 1; i <= socket_list.size(); i++)
+      System.out.println("Select node:");
+      for(int i = 1; i <= node_list.size(); i++)
       {
-        System.out.println("  " + i + ". " + socket_list.get(i - 1));
+        System.out.println("  " + i + ". " + node_list.get(i - 1));
       }
       try
       {
-        socket = reader.nextInt() - 1;
+        nodeNum = reader.nextInt() - 1;
       }
       catch(Exception e)
       {
@@ -82,28 +83,51 @@ public class Driver
         reader.nextLine(); // Clear input buffer
         continue;
       }
-      if(socket < 0 || socket >= socket_list.size())
+      if(nodeNum < 0 || nodeNum >= node_list.size())
       {
         System.out.println("Incorrect selection\n");
         continue;
       }
-      socket_selected = true;
+      node_selected = true;
     }
+    
+    
+    /*
+    try
+    {
+      String thisIp = IpChecker.getIp();
+      for( int i = 0; i < node_list.size(); i++ )
+      {
+        String[] node_info = node_list.get(i).split("\\s+");
+        System.out.println(node_info[ 0 ]);
+        System.out.println(thisIp);
+        System.out.println("");
+        if( node_info[ 0 ].equals( thisIp ) )
+        {
+          nodeNum = i;
+        }
+      }
+    }
+    catch(Exception e)
+    {
+      e.printStackTrace();
+    }
+    */
     
     // Starting correct node type
     Node node = null;
     switch(mode)
     {
       case 1: // P2PNode
-        node = new P2PNode(socket_list, socket);
+        node = new P2PNode(node_list, nodeNum);
         node.start();
         break;
       case 2: // ServerNode
-        node = new ServerNode(socket_list, socket);
+        node = new ServerNode(node_list, nodeNum);
         node.start();
         break;
       case 3: // ClientNode
-        node = new ClientNode(socket_list, socket);
+        node = new ClientNode(node_list, nodeNum);
         node.start();
         break;
     }

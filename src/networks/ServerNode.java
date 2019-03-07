@@ -7,20 +7,23 @@ public class ServerNode extends Node
 
   private Vector<Sender> senders = new Vector<Sender>();
   private Listener listener;
+  private Vector<Integer> reportingNodes = new Vector<Integer>();
   
-  public ServerNode(Vector<String> socket_list, int socket_number)
+  public ServerNode(Vector<String> node_list, int nodeNum)
   {
-    super(socket_list, socket_number);
+    super(node_list, nodeNum);
     this.server = true;
     for(int i = 0; i < this.packet_list.getLength(); i++)
     {
-      if(i == this.socket_number)
+      if(i == this.nodeNum)
       {
-        packet_list.setPacket(i, new Packet(this.ip_list.get(i), this.port_list.get(i), 1, 1));        
+        packet_list.setPacket(i, new Packet(this.ip_list.get(i), this.port_list.get(i), 1, 1)); 
+        setIP( this.ip_list.get(i));
       }
       else
       {
         packet_list.setPacket(i, new Packet(this.ip_list.get(i), this.port_list.get(i), -1, -1)); 
+        reportingNodes.add(i);
       }
     }
   }
@@ -29,9 +32,10 @@ public class ServerNode extends Node
   {
     for(int i = 0; i < this.ip_list.size(); i++)
     {
-      if(i == socket_number)
+      if(i == nodeNum)
       {
-        listener = new Listener(this.port_list.get(i), this.packet_list);
+        listener = new Listener(this.IPAddress, this.port_list.get(i), this.packet_list, 
+            reportingNodes, nodeNum);
         listener.start();
       }
       else
