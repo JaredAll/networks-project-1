@@ -53,7 +53,7 @@ public class ClientNode extends Node
     {
       senders.add( new Sender( this.ip_list.get( serverNodeNum ), 
           this.port_list.get( serverNodeNum ), this.packet_list ) );
-      senders.get( serverNodeNum ).start();
+      senders.get( senders.size() - 1 ).start();
     }
     
     //remain a client until the listener says to change
@@ -66,6 +66,7 @@ public class ClientNode extends Node
       e.printStackTrace();
     }
     System.out.println();
+    
     
     
     //periodically check for quorum votes and results
@@ -82,9 +83,11 @@ public class ClientNode extends Node
           isServer = true;
         }
         
-        if( listener.castQuorum() )
+        boolean castingVote = listener.castQuorum();
+        
+        if( castingVote )
         {
-          int newServerNodeNum;
+          int newServerNodeNum = 0;
           
           if( serverNodeNum == nodeNum )
           {
@@ -99,19 +102,29 @@ public class ClientNode extends Node
           {
             listener.voteForSelf();
           }
-          else
+          else if( newServerNodeNum != serverNodeNum )
           {
+            System.out.println(newServerNodeNum);
             senders.add( new Sender( getIpList().get( newServerNodeNum ), 
                 getPortList().get( newServerNodeNum ), getPacketList() ) );
+            senders.get(senders.size() - 1).start();
           }
         }
         
         //only maintain one sender if you are client 
-        if( !listener.castQuorum() && !listener.becomeServer() && !isServer )
+        if( !listener.becomeServer() && !isServer )
         {
+          System.out.println("I am client");
+          for( int i = 0; i < senders.size(); i++ )
+          {
+            senders.get(i).kill();
+          }
           senders.clear();
+          
           senders.add( new Sender( getIpList().get( serverNodeNum ), 
               getPortList().get( serverNodeNum ), getPacketList() ) );
+          senders.get(senders.size() - 1).start();
+          
         }
           
       }
@@ -134,7 +147,13 @@ public class ClientNode extends Node
   
   private void createSenders()
   {
+    
+    for( int i = 0; i < senders.size(); i++ )
+    {
+      senders.get(i).kill();
+    }
     senders.clear();
+    
     for( int i = 1; i < ip_list.size(); i++ )
     {
       if( i != serverNodeNum )

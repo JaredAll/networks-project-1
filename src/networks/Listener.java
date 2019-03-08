@@ -66,10 +66,11 @@ public class Listener extends Thread
       {
         System.out.print("WE have entered the run\n");
         int inactive = 0;
+        System.out.println("Size of the updated packets list: " + updatedPackets.size() );
         for( int i = 0; i < packet_list.getLength(); i++ )
         {
           System.out.println(i);
-          if( updatedPackets != null && !updatedPackets.contains(i) && reportingNodes.contains(i) )
+          if( updatedPackets != null && !updatedPackets.contains(i) && i != myNode )
           {
             System.out.println("^ this is being set to inactive");
             packet_list.getPacket(i).setActiveFlag( inactive );              
@@ -77,18 +78,14 @@ public class Listener extends Thread
         }
         
         //if no packet received from Server, cast vote for new server
-        if( updatedPackets.size() == 1 )
+        if( updatedPackets.size() == 0 )
         {
+          System.out.println("sending quorum vote");
           castQuorum = true;
         }
         else
         {
           castQuorum = false;
-        }
-        
-        if( updatedPackets != null )
-        {
-          clearUpdatedPackets();
         }
         
         if( quorum > packet_list.getLength() / 2)
@@ -99,9 +96,9 @@ public class Listener extends Thread
         {
           quorum = 0;
         }
+        updatedPackets.clear();
       }
     };
-    
     
     long delay = 30000L;
     long period = 30000L;
@@ -122,7 +119,7 @@ public class Listener extends Thread
         }
       }
       
-      markUpdatedPacket( packet_list.findPacket(host));
+      markUpdatedPacket( packet_list.findPacket(host) );
       try 
       {
         socket = new DatagramSocket(this.port);
@@ -143,9 +140,26 @@ public class Listener extends Thread
         System.out.println("IP address " + IPAddress.getHostAddress() + " found at " + packet_list.findPacket(IPAddress.getHostAddress()));
         markUpdatedPacket( packet_list.findPacket( IPAddress.getHostAddress() ) );
         
-        if( silentNodes.contains(packet_list.findPacket(IPAddress.getHostAddress())) )
+        int senderPos = packet_list.findPacket(IPAddress.getHostAddress());
+        if( silentNodes.contains( senderPos ) )
         {
-          quorum += 1;
+          if( castQuorum )
+          {
+            reportingNodes.clear();
+            silentNodes.clear();
+            reportingNodes.add( senderPos );
+            for( int i = 0; i < packet_list.getLength(); i++ )
+            {
+              if( i != senderPos )
+              {
+                silentNodes.add(i);
+              }
+            }
+          }
+          else
+          {
+            quorum += 1;
+          }
         }
         
         for( int i = 0; i < packet_list.getLength(); i++ )
@@ -198,11 +212,6 @@ public class Listener extends Thread
     updatedPackets.add(packetPos);
   }
   
-  private void clearUpdatedPackets()
-  {
-    updatedPackets.clear();
-  }
-  
   public void voteForSelf()
   {
     quorum += 1;
@@ -216,6 +225,29 @@ public class Listener extends Thread
   public boolean switchServer()
   {
     return switchServer;
+  }
+  
+  public int findServer()
+  {
+    int serverNum = 0;
+    for( int i = 0; i < packet_list.getLength(); i++ )
+    {
+      if( updatedPackets.contains(i))
+      {
+        serverNum = i;
+      }
+    }
+    return serverNum;
+  }
+  
+  public boolean receivedPacket()
+  {
+    boolean receivedPacket = false;
+    if( updatedPackets.size() > 0 )
+    {
+      receivedPacket = true;
+    }
+    return receivedPacket;
   }
   
   private Object deserializePacketList(byte[] data)
