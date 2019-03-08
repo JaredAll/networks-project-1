@@ -91,29 +91,6 @@ public class Driver
       node_selected = true;
     }
     
-    
-    /*
-    try
-    {
-      String thisIp = IpChecker.getIp();
-      for( int i = 0; i < node_list.size(); i++ )
-      {
-        String[] node_info = node_list.get(i).split("\\s+");
-        System.out.println(node_info[ 0 ]);
-        System.out.println(thisIp);
-        System.out.println("");
-        if( node_info[ 0 ].equals( thisIp ) )
-        {
-          nodeNum = i;
-        }
-      }
-    }
-    catch(Exception e)
-    {
-      e.printStackTrace();
-    }
-    */
-    
     // Starting correct node type
     Node node = null;
     switch(mode)

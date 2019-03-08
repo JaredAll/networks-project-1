@@ -44,6 +44,7 @@ public class Listener extends Thread
     castQuorum = false;
     
     
+    //keep track of who to receive from
     for( int i = 0; i < packet_list.getLength(); i++ )
     {
       if( !reportingNodes.contains(i))
@@ -60,19 +61,20 @@ public class Listener extends Thread
     
     Timer timer = new Timer();
     
+    
+    /*
+     * This task handles listener timeouts
+     */
     TimerTask timeout = new TimerTask()
     {
       public void run()
       {
-        System.out.print("WE have entered the run\n");
         int inactive = 0;
-        System.out.println("Size of the updated packets list: " + updatedPackets.size() );
         for( int i = 0; i < packet_list.getLength(); i++ )
         {
-          System.out.println(i);
+          //if no packets received from last timeout, set node as inactive
           if( updatedPackets != null && !updatedPackets.contains(i) && i != myNode )
           {
-            System.out.println("^ this is being set to inactive");
             packet_list.getPacket(i).setActiveFlag( inactive );              
           }
         }
@@ -80,7 +82,6 @@ public class Listener extends Thread
         //if no packet received from Server, cast vote for new server
         if( updatedPackets.size() == 0 )
         {
-          System.out.println("sending quorum vote");
           castQuorum = true;
         }
         else
@@ -119,6 +120,7 @@ public class Listener extends Thread
         }
       }
       
+      //a node always updates its own packet
       markUpdatedPacket( packet_list.findPacket(host) );
       try 
       {
@@ -137,12 +139,15 @@ public class Listener extends Thread
         System.out.println("Packets received from [" + IPAddress.getHostAddress() + ":" + port + "]");
         new_packet_list.display();
         
-        System.out.println("IP address " + IPAddress.getHostAddress() + " found at " + packet_list.findPacket(IPAddress.getHostAddress()));
+        //update incoming packets as they arrive 
         markUpdatedPacket( packet_list.findPacket( IPAddress.getHostAddress() ) );
         
         int senderPos = packet_list.findPacket(IPAddress.getHostAddress());
+        
+        //receive from someone who's supposed to be quiet
         if( silentNodes.contains( senderPos ) )
         {
+          //and you voted, then they must be the server
           if( castQuorum )
           {
             reportingNodes.clear();
@@ -156,12 +161,13 @@ public class Listener extends Thread
               }
             }
           }
-          else
+          else //otherwise, they voted for you
           {
             quorum += 1;
           }
         }
         
+        //copy info on silent nodes from the reporting nodes
         for( int i = 0; i < packet_list.getLength(); i++ )
         {
           if( updatedPackets.contains(i) )
@@ -186,47 +192,82 @@ public class Listener extends Thread
     }
   }
   
+  /**
+   * adds the packet to the list in the location
+   * @param packetLocation the location in the list
+   * @param newPacket the packet to be inserted
+   */
   private void copyPacket(int packetLocation, Packet newPacket)
   {
     packet_list.setPacket( packetLocation, newPacket );
   }
   
+  /**
+   * kills the listener thread
+   */
   public void kill()
   {
     this.running = false;
   }
   
+  /**
+   * check to see if Listener wants to cast quorum vote
+   * @return true if casting, false otherwise
+   */
   public boolean castQuorum()
   {
     return castQuorum;
   }
   
+  /**
+   * set packet as active
+   * @param packetLocation the packet to be updated
+   */
   private void updatePacket( int packetLocation )
   {
     int active = 1;
     packet_list.getPacket(packetLocation).setActiveFlag( active );
   }
   
+  /**
+   * mark packet as updated
+   * @param packetPos the position of the packet in the packetList
+   */
   private void markUpdatedPacket( int packetPos )
   {
     updatedPackets.add(packetPos);
   }
   
+  /**
+   * cast quorum vote for yourself
+   */
   public void voteForSelf()
   {
     quorum += 1;
   }
   
+  /**
+   * check to see if client is to become server
+   * @return true if it is to become server, false otherwise
+   */
   public boolean becomeServer()
   {
     return becomeServer;
   }
   
+  /**
+   * check to see if client needs to switch servers
+   * @return true if it is to switch, false otherwise
+   */
   public boolean switchServer()
   {
     return switchServer;
   }
   
+  /**
+   * determine who the server is 
+   * @return the position of the server in the packetList
+   */
   public int findServer()
   {
     int serverNum = 0;
@@ -240,6 +281,10 @@ public class Listener extends Thread
     return serverNum;
   }
   
+  /**
+   * check to see if the listener received a packet
+   * @return true if it has, false otherwise
+   */
   public boolean receivedPacket()
   {
     boolean receivedPacket = false;

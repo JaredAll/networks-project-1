@@ -145,6 +145,9 @@ public class ClientNode extends Node
     }
   }
   
+  /**
+   * creates senders if client is to become server
+   */
   private void createSenders()
   {
     
