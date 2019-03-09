@@ -1,7 +1,6 @@
 package networks;
 
 import java.io.Serializable;
-import java.net.InetAddress;
 
 public class PacketList implements Serializable
 {
