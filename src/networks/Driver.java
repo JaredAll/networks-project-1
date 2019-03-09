@@ -108,49 +108,7 @@ public class Driver
         node.start();
         break;
     }
-    
-    // Post start options
-    int input = 0;
-    boolean option_selected = false;
-    while(!option_selected)
-    {
-      // TODO: Add more options? Do we need more post options?
-      System.out.println("\n1. Exit");
-      try
-      {
-        input = reader.nextInt();
-      }
-      catch(Exception e)
-      {
-        System.out.println("Invalid input\n");
-        reader.nextLine(); // Clear input buffer
-        continue;
-      }
-      if(input < 1 || input > 1)
-      {
-        System.out.println("Incorrect selection\n");
-        continue;
-      }
-      switch(input)
-      {
-        case 1: // Exit
-          switch(mode)
-          {
-            case 1: // P2PNode
-              ((P2PNode)node).kill();
-              break;
-            case 2: // ServerNode
-              ((ServerNode)node).kill();
-              break;
-            case 3: // ClientNode
-              ((ClientNode)node).kill();
-              break;
-          }
-          option_selected = true;
-          break;
-      }
-    }
-    
+       
     reader.close();
 
   }
